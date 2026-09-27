@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Egg Sort Mekanik Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2b1d12; --card:#fff8ea; --ink:#3a2a1a; --muted:#8a7359; --accent:#ff8d24; --accent2:#3ccf55;
+  --line:#e9d6b3; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:Fredoka,system-ui,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none}
+#stage{position:absolute;left:50%;top:50%;width:540px;height:980px;transform-origin:50% 50%;overflow:hidden;border-radius:18px;box-shadow:var(--shadow);background:#9fdcff}
+canvas{position:absolute;left:0;top:0;width:540px;height:980px;touch-action:none}
+#hud{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:8px;padding:10px 12px;pointer-events:none}
+#hud>*{pointer-events:auto}
+.hbtn{width:44px;height:44px;border-radius:14px;border:0;background:#fff;color:var(--ink);font:700 22px Fredoka,sans-serif;box-shadow:0 4px 0 #d1b98f,0 6px 12px rgba(0,0,0,.15);cursor:pointer;display:grid;place-items:center}
+.hbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #d1b98f}
+.htitle{flex:1;min-width:0;background:rgba(255,255,255,.92);border-radius:14px;padding:4px 12px;box-shadow:0 4px 0 #d1b98f;line-height:1.1}
+.htitle .n{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.htitle .t{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{background:#fff;border-radius:14px;padding:6px 10px;font-weight:700;font-size:15px;box-shadow:0 4px 0 #d1b98f;text-align:center;line-height:1.05}
+.pill small{display:block;font-size:10px;color:var(--muted);font-weight:600}
+.screen{position:absolute;inset:0;overflow-y:auto;background:linear-gradient(#ffe7b8,#ffcf87);padding:26px 18px 30px}
+.hidden{display:none!important}
+.logo{text-align:center;margin:6px 0 4px}
+.logo h1{margin:0;font-size:54px;letter-spacing:1px;color:#fff;-webkit-text-stroke:3px #c9621b;text-shadow:0 6px 0 #c9621b}
+.logo p{margin:6px 0 0;font-weight:600;color:#8a4b17;font-size:16px}
+.coins{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:4px 14px;font-weight:700;margin-top:10px;box-shadow:0 3px 0 #d1b98f}
+.coin{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3a6,#ffc21a 55%,#d58a00);display:inline-block;border:2px solid #b87500}
+.list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.lv{position:relative;background:var(--card);border-radius:18px;padding:12px 12px 12px 12px;border:0;text-align:left;cursor:pointer;box-shadow:0 5px 0 #d9b77f,0 8px 16px rgba(0,0,0,.12);font-family:inherit;color:inherit;display:flex;gap:10px;align-items:center;min-height:86px}
+.lv:active{transform:translateY(3px);box-shadow:0 2px 0 #d9b77f}
+.lv canvas{position:static;width:58px;height:58px;flex:none;border-radius:12px;background:#dff3ff}
+.lv .num{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px}
+.lv .nm{font-size:16px;font-weight:700;line-height:1.1}
+.lv .en{font-size:12px;color:var(--muted);font-weight:500}
+.lv .done{position:absolute;right:10px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--accent2);color:#fff;font-size:14px;display:grid;place-items:center;font-weight:700}
+.note{margin-top:18px;font-size:13px;color:#7a4a1c;background:rgba(255,255,255,.55);border-radius:14px;padding:10px 12px;line-height:1.4}
+.modal{position:absolute;inset:0;background:rgba(20,12,4,.55);display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:470px;background:var(--card);border-radius:24px;padding:20px 20px 18px;box-shadow:var(--shadow);text-align:center;animation:pop .28s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.badge{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:4px 14px;font-weight:700;font-size:13px;letter-spacing:1px}
+.card h2{margin:10px 0 2px;font-size:30px;line-height:1.05}
+.card .en{color:var(--muted);font-weight:600;margin-bottom:8px}
+.card canvas{position:static;width:130px;height:130px;border-radius:20px;background:#dff3ff;margin:6px auto 8px;display:block}
+.card p{margin:6px 0;font-size:16px;line-height:1.4;text-align:left}
+.card .diff{font-size:14px;color:#6b5840;background:#f3e6cc;border-radius:12px;padding:8px 10px;text-align:left;margin-top:8px}
+.card .tip{font-size:14px;color:#1f6b2e;background:#dcf6df;border-radius:12px;padding:8px 10px;text-align:left;margin-top:8px}
+.btns{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;border:0;border-radius:16px;padding:14px 10px;font:700 19px Fredoka,sans-serif;color:#fff;background:var(--accent2);box-shadow:0 5px 0 #25913a;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #25913a}
+.btn.o{background:var(--accent);box-shadow:0 5px 0 #c9621b}
+.btn.g{background:#a79a88;box-shadow:0 5px 0 #7c7162}
+.btn small{display:block;font-size:12px;font-weight:600;opacity:.9}
+.big{font-size:44px;margin:4px 0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="hud" class="hidden">
+    <button class="hbtn" id="bMenu" title="Menü">☰</button>
+    <div class="htitle"><div class="n" id="hNum">Bölüm 1</div><div class="t" id="hName">-</div></div>
+    <div class="pill"><span id="hTray">0</span><small>TEPSİ</small></div>
+    <button class="hbtn" id="bInfo" title="Mekanik bilgisi">?</button>
+    <button class="hbtn" id="bRestart" title="Yeniden başlat">↻</button>
+  </div>
+  <div id="menu" class="screen">
+    <div class="logo">
+      <h1>EGG SORT</h1>
+      <p>Yeni Mekanik Demo · 10 Özellik</p>
+      <div class="coins"><span class="coin"></span><span id="mCoins">0</span></div>
+    </div>
+    <div class="list" id="lvList"></div>
+    <div class="note"><b>Nasıl oynanır:</b> Yolu açık (parlak) bir tavuğa dokun. Tavuk atış alanına gider, 9 yumurtasını huniye fırlatır. Yumurtalar conveyor'da döner ve en öndeki (aktif) aynı renk tepsiye zıplar. Tüm tepsileri doldur! Conveyor 30 yumurtayla dolar ve hiçbir yumurta aktif tepsilere uymazsa kaybedersin.</div>
+  </div>
+  <div id="modal" class="modal hidden"><div class="card" id="mCard"></div></div>
+</div>
+<script>
+'use strict';
+// =================== CONFIG ===================
+const W = 540, H = 980;
+const COL = { R:'#ff4b4b', B:'#3d8bff', Y:'#ffd12e', G:'#3ccf55', P:'#a65cff', O:'#ff8d24', K:'#ff66c4', C:'#26d4e4' };
+const LANE_X = [120, 220, 320, 420], FRONT_Y = 296, ROW_GAP = 50, VIS = 4, TW = 88, TH = 40, CUP = 26;
+const BL = { x0:95, x1:445, yt:356, yb:446, cy:401, r:45 };
+BL.L1 = BL.x1 - BL.x0; BL.A = Math.PI * BL.r; BL.L = 2 * BL.L1 + 2 * BL.A;
+const NS = 30, SP = BL.L / NS, SPEED = 170;
+const FUN = { x:270, top:370, bot:432, cap:27 };
+const S_ENTRY = BL.L1 + BL.A + (BL.x1 - FUN.x);
+const POCK = { x:270, y:484, px:338 };
+const S_POCK = BL.L1 + BL.A + (BL.x1 - POCK.px);
+const S_LANE = LANE_X.map(x => x - BL.x0);
+const SPOTS = [{ x:148, y:530 }, { x:392, y:530 }];
+const GRID_Y = 606;
+const FIRE_DT = 0.075;
+
+// =================== LEVELS ===================
+// Grid: büyük harf = tavuk rengi, küçük harf = o renkte mısır, '#' = duvar, 'F' = tilki, '.' = boş, '*' = özellik alanı
+const LEVELS = [
+  { name:'Hasır Perde', en:'Rolling Cover',
+    grid:['RY..BG','B#..#R','#OPPO#','#POOP#','#YBRG#'],
+    feats:[{ t:'cover', r:2, c:1, w:4, h:3, dir:'down' }],
+    desc:'Tavukların üzerini kapatan hasır perde. Her tepsi tamamen doldurulduğunda perde bir sıra sarılır ve o sıradaki tavukların üzeri açılır. Açılma yönü perdenin üzerindeki okla gösterilir; son sıra açılınca perde kaybolur.',
+    diff:'Chicken Box bütün alanı aynı anda açar. Hasır Perde alanı aşamalı açtığı için yeni tavuklar bölümün farklı anlarında devreye girer.',
+    tip:'Önce önü açık tavuklarla tepsi tamamla — her tamamlanan tepsi bir sıra açar.' },
+  { name:'Egg Maker', en:'Yumurta Makinesi',
+    grid:['RBG.YR','B.**GY','Y.**.B','GYRBG.','#RB.G#'],
+    feats:[{ t:'maker', r:1, c:2, color:'P', n:9 }],
+    desc:'Tavuk alanında 2×2 yer kaplayan makine. Rengi üreteceği yumurtaları, sayısı içinde kalan yumurtayı gösterir. Makinenin hemen yanındaki bir tavuk atışa gönderildiğinde tavuk normal atışını yapar, ardından makine huniye 3 yumurta bırakır (9 → 6 → 3 → 0). Bitince makine kalkar ve alanı açılır.',
+    diff:'Generator\'ın çıkardığı tavukları oyuncu ayrıca gönderir. Makinenin yumurtaları ise tetiklenince otomatik olarak conveyor\'a gelir.',
+    tip:'Mor tepsiler öne gelmeden makineyi tetiklersen mor yumurtalar bantta yer kaplar. Zamanlamaya dikkat!' },
+  { name:'Chicken Portal', en:'Tavuk Portalı',
+    grid:['RB.YGB','YG##RY','BR##GR','G#**#Y','##**##'],
+    feats:[{ t:'portal', r:3, c:2, colors:['P','O','P','O'], exit:[0, 2] }],
+    desc:'Oyun alanının iki farklı bölgesini bağlayan giriş alanı (2×2, 4 tavuk) ve çıkış hücresi. Çıkış boşaldığında giriş alanındaki sıradaki tavuk otomatik olarak çıkışa taşınır — normal yolu kapalı olsa bile. Çıkıştaki tavuk seçilince atışa gider, sıradaki gelir.',
+    diff:'Giriş alanındaki tüm tavuklar baştan görünür; sırayı planlayarak kapalı bölgedeki renkleri öne çekebilirsin.',
+    tip:'Portaldaki sıradaki tavuk parlar. Çıkıştaki tavuğu göndermeden yenisi gelmez.' },
+  { name:'Kuluçka Yuvası', en:'Hatchery',
+    grid:['RB.YGR','Y.**.B','G.**.G','BRY.RY'],
+    feats:[{ t:'hatch', r:1, c:2, colors:['P','O','O','P'] }],
+    desc:'2×2 alan kaplayan yuvada dört renkli yumurta bulunur. Her tepsi tamamlandığında sıradaki yumurta çatlar ve kendi hücresinde bir tavuğa dönüşür. Yumurtanın rengi çıkacak tavuğun rengini gösterir; sıradaki yumurta hafifçe parlar.',
+    diff:'Generator boşalan alanla, Elevator üstteki grubun gönderilmesiyle çalışır. Kuluçka Yuvası ise tepsi tamamlandıkça yeni tavukları açar.',
+    tip:'Yumurtadan çıkan tavuk, yolu açıksa hemen gönderilebilir.' },
+  { name:'Gezgin Tilki', en:'Hopping Fox',
+    grid:['RYBGRB','G#F.#Y','B#YR#G','YFGB.R','##RY##'],
+    feats:[{ t:'fox', r:1, c:2, n:2 }, { t:'fox', r:3, c:1, n:2 }],
+    desc:'Tavuk alanında bir hücreyi kapatan tilki. Yanındaki bir tavuk gönderildiğinde onun boşalttığı hücreye zıplar; tilkinin önceki hücresi açılır. Üzerindeki sayı her zıplamada azalır — sayı bitince (ör. ikinci zıplamada) tahtadan kaçar.',
+    diff:'Engel sabit değil: hangi komşuyu gönderdiğin, tilkinin nereye zıplayacağını ve hangi yolun açılacağını belirler.',
+    tip:'Tilkinin yanındaki tavuğu göndermek hem yolu açar hem de tilkiyi uzaklaştırır.' },
+  { name:'Mısır Tarlası', en:'Corn Patch',
+    grid:['RbYGrB','YGb.BR','rBGyRY','#GRBY#'],
+    feats:[],
+    desc:'Mısırlar tavuk alanında birer hücre kaplayan engellerdir; her birinin başında sabit bir renk vardır. O renkteki bir tepsi TAMAMEN doldurulduğunda tahtadaki o renge ait bütün mısırlar aynı anda temizlenir ve yolu açılan tavuklar seçilebilir hale gelir.',
+    diff:'Frozen Chicken ve Chicken Box yerleşen yumurta sayısıyla açılır. Mısır Tarlası\'nda belirleyici olan belirli bir renkteki tepsinin tamamlanmasıdır.',
+    tip:'Mavi tepsiyi tamamla → tüm mavi mısırlar aynı anda kaybolur.' },
+  { name:'Yumurta Cebi', en:'Egg Pocket',
+    grid:['PRY.BP','BG.YRG','YRPBGB'],
+    feats:[{ t:'pocket', color:'P' }], late:{ P:2.6 },
+    desc:'Conveyor\'ın yanında duran, belirli bir renge ait 3 yumurtalık küçük bir bekleme cebi. O renkteki yumurtalar aktif tepsilere yerleşemediğinde, cepten geçerken boş gözlere alınır. Uygun tepsi aktif olduğunda biriken yumurtalar otomatik olarak tepsiye aktarılır.',
+    diff:'Conveyor kapasitesi (30) dışında renk bazlı küçük bir tampon alan sağlar — erken gönderilen yanlış renk tavukların cezasını hafifletir.',
+    tip:'Mor tepsiler geç geliyor. Cep sadece 3 mor yumurta tutar; mor tavukları erken yollarsan bant dolabilir.' },
+  { name:'Locked Tray', en:'Kilitli Tepsi',
+    grid:['RYBGRY','BG.#GB','YRBRY.','#GYBR#'],
+    feats:[{ t:'key', r:0, c:1 }, { t:'key', r:0, c:4 }, { t:'key', r:2, c:2 }, { t:'key', r:3, c:2 },
+           { t:'locked', lane:1, index:0, color:'G', need:2 }, { t:'locked', lane:3, index:3, color:'B', need:2 }],
+    desc:'Üzerinde kilit ve bir sayı bulunan tepsi. Tepsiyi kullanıma açmak için üzerinde yazan sayı kadar anahtar toplanmalıdır. Kilit açıldıktan sonra belirlenen renkte yumurta kabul etmeye başlar. (Demo: anahtarlar, üzerinde anahtar simgesi olan tavuklar gönderildiğinde toplanır.)',
+    diff:'Kilitli tepsi öndeyken o şerit tıkanır; anahtar taşıyan tavukları ne zaman göndereceğin şeridin açılma zamanını belirler.',
+    tip:'Anahtarlı tavuklar önce en öndeki kilitli tepsiye gider.' },
+  { name:'Boyanan Tepsi', en:'Color Catch Tray',
+    grid:['RBYGRB','GY.BYG','BRGYRB'],
+    feats:[{ t:'catch', lane:0, index:1 }, { t:'catch', lane:2, index:2 }, { t:'catch', lane:3, index:5 }],
+    desc:'Aktif olduğunda renksiz görünen, 3 yumurtalık normal boyutta bir tepsi. İçine giren ilk yumurta tepsinin rengini belirler; kalan iki göz artık yalnızca o rengi kabul eder.',
+    diff:'Surprise Tray\'in rengi önceden belirli ama gizlidir; Boyanan Tepsi\'nin rengi oyun sırasında belirlenir. Joker tepsiden farklı olarak ilk yumurtadan sonra tek renge bağlanır.',
+    tip:'Banttaki yumurtaları boşaltmak için renksiz tepsiyi en kalabalık renkle boya.' },
+  { name:'Döner Tünek', en:'Rotating Perch',
+    grid:['R**YBG','B**.GR','YGR.BY','#BYRG#'],
+    feats:[{ t:'perch', r:0, c:1, slots:['P','O','P','O'], exit:0 }],
+    desc:'Dört görünür tavuğun bulunduğu döner platform. Yalnızca çıkış noktasındaki (ok) tavuk gönderilebilir. Herhangi bir tavuk gönderildiğinde platform döner ve sıradaki dolu yuva çıkışa gelir; boş yuvalar atlanır. Platform dışındaki bir tavuğu göndermek de dönüşü tetikler.',
+    diff:'Hen Coop\'ta arkadakine ulaşmak için öndekini göndermek gerekir; burada öndekini kullanmadan başka bir tavuğu erişilebilir yapabilirsin. Elevator gibi bütün grubun bitmesini de beklemezsin.',
+    tip:'Çıkıştaki renge ihtiyacın yoksa başka bir tavuk gönder — platform döner.' },
+];
+
+// =================== HELPERS ===================
+let cv, ctx;
+let G = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+function shade(hex, p) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  if (p < 0) { r *= 1 + p; g *= 1 + p; b *= 1 + p; } else { r += (255 - r) * p; g += (255 - g) * p; b += (255 - b) * p; }
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function ell(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); }
+function beltPos(s) {
+  s = ((s % BL.L) + BL.L) % BL.L;
+  if (s < BL.L1) return { x:BL.x0 + s, y:BL.yt };
+  s -= BL.L1;
+  if (s < BL.A) { const a = -Math.PI / 2 + s / BL.r; return { x:BL.x1 + BL.r * Math.cos(a), y:BL.cy + BL.r * Math.sin(a) }; }
+  s -= BL.A;
+  if (s < BL.L1) return { x:BL.x1 - s, y:BL.yb };
+  s -= BL.L1; const a = Math.PI / 2 + s / BL.r;
+  return { x:BL.x0 + BL.r * Math.cos(a), y:BL.cy + BL.r * Math.sin(a) };
+}
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+// =================== LEVEL BUILD ===================
+function mkTray(type, color, extra) {
+  return Object.assign({ type, color, filled:0, reserved:0, done:false, popT:0, dy:0, bump:0, flash:0 }, extra || {});
+}
+function chick(color, extra) { return Object.assign({ k:'chick', color, eggs:9, key:false, born:-9, shake:0 }, extra || {}); }
+
+function buildLevel(li) {
+  const L = LEVELS[li];
+  const rows = L.grid.length, cols = L.grid[0].length;
+  const cell = Math.min(70, 470 / cols, 350 / rows);
+  G = {
+    li, L, rows, cols, cell, gx:(W - cols * cell) / 2, gy:GRID_Y,
+    cells:[], covers:[], makers:[], portals:[], hatches:[], perches:[], pocket:null,
+    lanes:[[], [], [], []], slots:new Array(NS).fill(null), off:0,
+    funnel:[], funIn:0, shooters:[], emitters:[], flights:[], parts:[], texts:[], fx:[], bench:[],
+    state:'play', time:0, failT:0, stallT:0, winT:0, continues:0, reach:null, taps:[], total:0,
+  };
+  for (let r = 0; r < rows; r++) {
+    const row = [];
+    for (let c = 0; c < cols; c++) {
+      const ch = L.grid[r][c];
+      if (ch === '.' || ch === '*') row.push(null);
+      else if (ch === '#') row.push({ k:'wall' });
+      else if (ch === 'F') row.push({ k:'fox', n:2, from:null, t:1 });
+      else if (ch === ch.toLowerCase()) row.push({ k:'corn', color:ch.toUpperCase(), shake:0 });
+      else row.push(chick(ch));
+    }
+    G.cells.push(row);
+  }
+  for (const f of L.feats) {
+    if (f.t === 'cover') G.covers.push({ r:f.r, c:f.c, w:f.w, h:f.h, dir:f.dir, opened:0, disp:0, gone:false, fade:1 });
+    else if (f.t === 'maker') {
+      const m = { r:f.r, c:f.c, color:f.color, n:f.n, gone:false, pulse:0 };
+      G.makers.push(m);
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) G.cells[f.r + i][f.c + j] = { k:'maker', m };
+    } else if (f.t === 'portal') {
+      const q = { r:f.r, c:f.c, slots:f.colors.slice(), next:0, exit:f.exit, cool:0.5, done:false };
+      G.portals.push(q);
+      for (let i = 0; i < 4; i++) G.cells[f.r + (i >> 1)][f.c + (i & 1)] = { k:'portal', q, idx:i };
+    } else if (f.t === 'hatch') {
+      const h = { r:f.r, c:f.c, colors:f.colors.slice(), next:0, done:false };
+      G.hatches.push(h);
+      for (let i = 0; i < 4; i++) G.cells[f.r + (i >> 1)][f.c + (i & 1)] = { k:'hatch', h, idx:i, color:f.colors[i], crack:0 };
+    } else if (f.t === 'fox') { G.cells[f.r][f.c] = { k:'fox', n:f.n, from:null, t:1 }; }
+    else if (f.t === 'pocket') G.pocket = { color:f.color, eggs:[], inc:0, cool:0 };
+    else if (f.t === 'key') G.cells[f.r][f.c].key = true;
+    else if (f.t === 'perch') {
+      const p = { r:f.r, c:f.c, slots:f.slots.slice(), exit:f.exit, ang:0, gone:false };
+      G.perches.push(p);
+      const pos = [[0, 0], [0, 1], [1, 1], [1, 0]];
+      pos.forEach(([dr, dc], i) => { G.cells[f.r + dr][f.c + dc] = { k:'perch', p, pos:i }; });
+    }
+  }
+  genTrays();
+  for (const lane of G.lanes) lane.forEach((t, j) => t.dy = FRONT_Y - j * ROW_GAP);
+  G.total = G.lanes.reduce((a, l) => a + l.length, 0);
+  computeReach(); G.taps = getTappables();
+  const s = supply(), d = demand();
+  for (const c in Object.assign({}, s, d.need)) if ((s[c] || 0) !== (d.need[c] || 0) && !d.wild) console.warn('Dengesiz renk', c, s[c], d.need[c]);
+}
+
+function genTrays() {
+  const L = G.L, late = L.late || {}, src = [];
+  // Erişim maliyeti: bir hücreye ulaşmak için önünden kaldırılması gereken engel/tavuk sayısı (Dijkstra)
+  const cost = (r, c) => {
+    const x = G.cells[r][c], cov = isCovered(r, c) ? 0.6 : 0;
+    if (!x) return cov;
+    if (x.k === 'chick') return 1 + cov;
+    if (x.k === 'corn' || x.k === 'fox') return 1.5;
+    if (x.k === 'maker') return 2.5;
+    return Infinity;
+  };
+  const dist = G.cells.map(row => row.map(() => Infinity));
+  const open = [];
+  for (let c = 0; c < G.cols; c++) { dist[0][c] = 0; open.push([0, 0, c]); }
+  while (open.length) {
+    open.sort((a, b) => a[0] - b[0]);
+    const [d, r, c] = open.shift();
+    if (d > dist[r][c]) continue;
+    const nd = d + cost(r, c);
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nc < 0 || nr >= G.rows || nc >= G.cols || nd >= dist[nr][nc]) continue;
+      dist[nr][nc] = nd; open.push([nd, nr, nc]);
+    }
+  }
+  for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
+    const x = G.cells[r][c];
+    if (x && x.k === 'chick') src.push({ color:x.color, n:9, w:dist[r][c] + (isCovered(r, c) ? 0.8 : 0) + (late[x.color] || 0) + r * 0.01, c });
+  }
+  for (const m of G.makers) src.push({ color:m.color, n:m.n, w:m.r + 0.5 + (late[m.color] || 0), c:m.c });
+  for (const q of G.portals) q.slots.forEach((col, i) => src.push({ color:col, n:9, w:1.4 + i * 1.1, c:q.exit[1] }));
+  for (const h of G.hatches) h.colors.forEach((col, i) => src.push({ color:col, n:9, w:2 + i * 1.4, c:h.c }));
+  for (const p of G.perches) for (let k = 0; k < 4; k++) { const pos = (p.exit - k + 4) % 4; if (p.slots[pos]) src.push({ color:p.slots[pos], n:9, w:p.r + 1.2 + k * 1.1, c:p.c }); }
+  src.sort((a, b) => a.w - b.w || a.c - b.c);
+  const seq = [];
+  for (const s of src) for (let i = 0; i < s.n / 3; i++) seq.push(s.color);
+  const specials = L.feats.filter(f => f.t === 'locked' || f.t === 'catch');
+  for (const sp of specials) {
+    const col = sp.t === 'locked' ? sp.color : (sp.color || seq[seq.length - 1]);
+    const i = seq.lastIndexOf(col); if (i >= 0) seq.splice(i, 1);
+  }
+  seq.forEach((c, i) => G.lanes[i % 4].push(mkTray('n', c)));
+  specials.slice().sort((a, b) => a.index - b.index).forEach(sp => {
+    const lane = G.lanes[sp.lane];
+    const t = sp.t === 'locked' ? mkTray('lock', sp.color, { need:sp.need, have:0, inc:0 }) : mkTray('catch', null);
+    lane.splice(Math.min(sp.index, lane.length), 0, t);
+  });
+}
+
+// ---- supply / demand (renk dengesi) ----
+function supply() {
+  const s = {}; const add = (c, n) => { if (c && n > 0) s[c] = (s[c] || 0) + n; };
+  for (const row of G.cells) for (const x of row) {
+    if (!x) continue;
+    if (x.k === 'chick') add(x.color, x.eggs);
+    else if (x.k === 'hatch') add(x.color, 9);
+  }
+  for (const m of G.makers) if (!m.gone) add(m.color, m.n);
+  for (const q of G.portals) q.slots.forEach(c => add(c, 9));
+  for (const p of G.perches) if (!p.gone) p.slots.forEach(c => add(c, 9));
+  for (const sh of G.shooters) { add(sh.color, sh.eggs); sh.after.forEach(a => add(a.color, a.n)); }
+  for (const e of G.emitters) add(e.color, e.n);
+  for (const b of G.bench) add(b.color, b.eggs);
+  G.funnel.forEach(c => add(c, 1));
+  G.slots.forEach(e => e && add(e.color, 1));
+  if (G.pocket) G.pocket.eggs.forEach(c => add(c, 1));
+  for (const f of G.flights) if (f.kind === 'fun' || f.kind === 'pock') add(f.color, 1);
+  return s;
+}
+function demand() {
+  const need = {}; let wild = 0;
+  for (const lane of G.lanes) for (const t of lane) {
+    if (t.done) continue;
+    if (t.type === 'catch' && !t.color) { wild += 3; continue; }
+    need[t.color] = (need[t.color] || 0) + 3 - t.filled - t.reserved;
+  }
+  return { need, wild };
+}
+// Boyanan tepsi yanlış renge boyandığında bölüm çözülemez hale gelmesin diye
+// arkadaki başlamamış bir tepsinin rengini yeniden dağıtır (Auto Distribute mantığı).
+function rebalance() {
+  for (let guard = 0; guard < 12; guard++) {
+    const s = supply(), d = demand().need;
+    let def = null, defV = 0, sur = null, surV = 0;
+    for (const c of new Set([...Object.keys(s), ...Object.keys(d)])) {
+      const ex = (s[c] || 0) - (d[c] || 0);
+      if (ex <= -3 && ex < defV) { def = c; defV = ex; }
+      if (ex >= 3 && ex > surV) { sur = c; surV = ex; }
+    }
+    if (!def || !sur) return;
+    let best = null, bj = -1;
+    G.lanes.forEach(lane => lane.forEach((t, j) => {
+      if (j > 0 && !t.done && t.type === 'n' && t.color === def && !t.filled && !t.reserved && j > bj) { best = t; bj = j; }
+    }));
+    if (!best) return;
+    best.color = sur; best.flash = 1;
+  }
+}
+
+// =================== GRID LOGIC ===================
+function isCovered(r, c) {
+  for (const v of G.covers) {
+    if (v.gone || r < v.r || r >= v.r + v.h || c < v.c || c >= v.c + v.w) continue;
+    const line = v.dir === 'down' ? r - v.r : v.dir === 'up' ? v.r + v.h - 1 - r : v.dir === 'right' ? c - v.c : v.c + v.w - 1 - c;
+    if (line >= v.opened) return true;
+  }
+  return false;
+}
+function isOpen(r, c) { return !G.cells[r][c] && !isCovered(r, c); }
+function computeReach() {
+  const R = G.rows, C = G.cols, reach = [];
+  for (let r = 0; r < R; r++) reach.push(new Array(C).fill(false));
+  const q = [];
+  for (let c = 0; c < C; c++) if (isOpen(0, c)) { reach[0][c] = true; q.push([0, c]); }
+  while (q.length) {
+    const [r, c] = q.shift();
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nc < 0 || nr >= R || nc >= C || reach[nr][nc] || !isOpen(nr, nc)) continue;
+      reach[nr][nc] = true; q.push([nr, nc]);
+    }
+  }
+  G.reach = reach;
+}
+function canAccess(r, c) {
+  if (r === 0) return true;
+  for (const [dr, dc] of DIRS) {
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nc >= 0 && nr < G.rows && nc < G.cols && G.reach[nr][nc]) return true;
+  }
+  return false;
+}
+function tappableCell(r, c) { const x = G.cells[r][c]; return !!(x && x.k === 'chick' && !isCovered(r, c) && canAccess(r, c)); }
+function perchExitCell(p) { const pos = [[0, 0], [0, 1], [1, 1], [1, 0]][p.exit]; return [p.r + pos[0], p.c + pos[1]]; }
+function perchTappable(p) { if (p.gone || !p.slots[p.exit]) return false; const [r, c] = perchExitCell(p); return canAccess(r, c); }
+function getTappables() {
+  const out = [];
+  for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) if (tappableCell(r, c)) out.push({ k:'cell', r, c, color:G.cells[r][c].color });
+  for (const p of G.perches) if (perchTappable(p)) out.push({ k:'perch', p, color:p.slots[p.exit] });
+  G.bench.forEach((b, i) => out.push({ k:'bench', i, color:b.color }));
+  return out;
+}
+function cellXY(r, c) { return { x:G.gx + (c + 0.5) * G.cell, y:G.gy + (r + 0.5) * G.cell }; }
+function perchSlotXY(p, pos, ang) {
+  const cx = G.gx + (p.c + 1) * G.cell, cy = G.gy + (p.r + 1) * G.cell, d = G.cell / 2;
+  const v = [[-d, -d], [d, -d], [d, d], [-d, d]][pos];
+  const ca = Math.cos(ang || 0), sa = Math.sin(ang || 0);
+  return { x:cx + v[0] * ca - v[1] * sa, y:cy + v[0] * sa + v[1] * ca };
+}
+
+// =================== ACTIONS ===================
+function doTap(t) {
+  if (t.k === 'cell') sendFromCell(t.r, t.c);
+  else if (t.k === 'perch') sendFromPerch(t.p);
+  else if (t.k === 'bench') sendFromBench(t.i);
+}
+function launch(color, eggs, x, y) {
+  const sh = { color, eggs, x, y, spot:-1, fireT:0.12, after:[], born:G.time };
+  G.shooters.push(sh); assignSpots(); return sh;
+}
+function assignSpots() {
+  for (let i = 0; i < SPOTS.length; i++) {
+    if (G.shooters.some(s => s.spot === i)) continue;
+    const w = G.shooters.find(s => s.spot === -1);
+    if (w) w.spot = i;
+  }
+}
+function sendFromCell(r, c) {
+  const x = G.cells[r][c]; G.cells[r][c] = null;
+  const p = cellXY(r, c);
+  const sh = launch(x.color, x.eggs, p.x, p.y);
+  if (x.key) sendKey(p.x, p.y);
+  afterSend(r, c, sh);
+}
+function sendFromPerch(p) {
+  const col = p.slots[p.exit]; p.slots[p.exit] = null;
+  const pt = perchSlotXY(p, p.exit, 0);
+  const sh = launch(col, 9, pt.x, pt.y);
+  afterSend(null, null, sh);
+}
+function sendFromBench(i) {
+  const b = G.bench.splice(i, 1)[0];
+  const sh = launch(b.color, b.eggs, b.x || 270, b.y || 576);
+  afterSend(null, null, sh);
+}
+function afterSend(r, c, sh) {
+  if (r != null) {
+    const isExit = G.portals.some(q => !q.done && q.exit[0] === r && q.exit[1] === c);
+    // Gezgin Tilki
+    if (!isExit) {
+      for (const [dr, dc] of DIRS) {
+        const fr = r + dr, fc = c + dc;
+        if (fr < 0 || fc < 0 || fr >= G.rows || fc >= G.cols) continue;
+        const f = G.cells[fr][fc];
+        if (!f || f.k !== 'fox') continue;
+        f.n--;
+        G.cells[fr][fc] = null;
+        if (f.n > 0) { f.from = { r:fr, c:fc }; f.t = 0; G.cells[r][c] = f; }
+        else { const a = cellXY(fr, fc), b = cellXY(r, c); G.fx.push({ k:'foxrun', x:a.x, y:a.y, tx:b.x, ty:G.gy + G.rows * G.cell + 60, t:0 }); floatText(a.x, a.y - 20, 'Kaçtı!', '#ff8d24'); }
+        break;
+      }
+    }
+    // Egg Maker
+    for (const m of G.makers) {
+      if (m.gone || m.n <= 0) continue;
+      const adj = r >= m.r - 1 && r <= m.r + 2 && c >= m.c - 1 && c <= m.c + 2 && !((r === m.r - 1 || r === m.r + 2) && (c === m.c - 1 || c === m.c + 2));
+      if (!adj) continue;
+      const n = Math.min(3, m.n); m.n -= n; m.pulse = 1;
+      const mx = G.gx + (m.c + 1) * G.cell, my = G.gy + (m.r + 1) * G.cell;
+      sh.after.push({ x:mx, y:my, color:m.color, n, t:0 });
+      if (m.n <= 0) {
+        m.gone = true; m.fade = 1;
+        for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) G.cells[m.r + i][m.c + j] = null;
+        burst(mx, my, '#b8c2cc', 22);
+      }
+    }
+  }
+  // Döner Tünek: herhangi bir tavuk gönderilince döner
+  for (const p of G.perches) rotatePerch(p);
+}
+function rotatePerch(p) {
+  if (p.gone) return;
+  if (p.slots.every(s => !s)) {
+    p.gone = true;
+    const pos = [[0, 0], [0, 1], [1, 1], [1, 0]];
+    pos.forEach(([dr, dc]) => G.cells[p.r + dr][p.c + dc] = null);
+    burst(G.gx + (p.c + 1) * G.cell, G.gy + (p.r + 1) * G.cell, '#c58a4a', 20);
+    return;
+  }
+  let k = 1; while (k < 4 && !p.slots[(p.exit - k + 4) % 4]) k++;
+  if (k === 4) return;
+  const ns = [null, null, null, null];
+  for (let i = 0; i < 4; i++) ns[(i + k) % 4] = p.slots[i];
+  p.slots = ns; p.ang = -k * Math.PI / 2;
+}
+function sendKey(x, y) {
+  let target = null, tl = -1;
+  const maxJ = Math.max(...G.lanes.map(l => l.length));
+  outer: for (let j = 0; j < maxJ; j++) for (let l = 0; l < 4; l++) {
+    const t = G.lanes[l][j];
+    if (t && t.type === 'lock' && t.have + t.inc < t.need) { target = t; tl = l; break outer; }
+  }
+  if (!target) { floatText(x, y - 20, '🔑', '#ffc21a'); return; }
+  target.inc++;
+  G.flights.push({ kind:'key', x0:x, y0:y, tgt:() => ({ x:LANE_X[tl], y:target.dy - 4 }), t:0, dur:0.75, arc:90,
+    done:() => {
+      target.inc--; target.have++; target.bump = 1;
+      if (target.have >= target.need) { target.type = 'n'; target.flash = 1; burst(LANE_X[tl], target.dy, '#ffd12e', 26); floatText(LANE_X[tl], target.dy - 30, 'Kilit açıldı!', '#e6a800'); }
+    } });
+}
+function onTrayComplete(color, x, y) {
+  burst(x, y, COL[color], 22);
+  for (const v of G.covers) {
+    if (v.gone) continue;
+    v.opened++;
+    const lines = (v.dir === 'down' || v.dir === 'up') ? v.h : v.w;
+    if (v.opened >= lines) v.gone = true;
+  }
+  for (const h of G.hatches) {
+    if (h.done) continue;
+    const i = h.next++, r = h.r + (i >> 1), c = h.c + (i & 1);
+    G.cells[r][c] = chick(h.colors[i], { born:G.time });
+    const p = cellXY(r, c); burst(p.x, p.y, '#fff6d6', 14); burst(p.x, p.y, COL[h.colors[i]], 10);
+    if (h.next >= 4) h.done = true;
+  }
+  let cleared = 0;
+  for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
+    const x = G.cells[r][c];
+    if (x && x.k === 'corn' && x.color === color) { G.cells[r][c] = null; const p = cellXY(r, c); burst(p.x, p.y, '#ffd65a', 12); burst(p.x, p.y, COL[color], 8); cleared++; }
+  }
+  if (cleared) { const p = cellXY(0, (G.cols - 1) / 2); floatText(p.x, G.gy - 16, cleared + ' mısır temizlendi', COL[color]); }
+}
+function accepts(t, color) {
+  if (!t || t.done || t.type === 'lock') return false;
+  if (t.type === 'catch' && !t.color) return true;
+  return t.color === color && t.filled + t.reserved < 3;
+}
+function eggToTray(li, t, color, x, y) {
+  if (t.type === 'catch' && !t.color) { t.color = color; t.flash = 1; rebalance(); }
+  const cup = t.filled + t.reserved; t.reserved++;
+  G.flights.push({ kind:'tray', color, x0:x, y0:y, tgt:() => ({ x:LANE_X[li] + (cup - 1) * CUP, y:t.dy - 1 }), t:0, dur:0.3, arc:34,
+    done:() => { t.reserved--; t.filled++; t.bump = 1; if (t.filled >= 3) { t.done = true; t.popT = 0; onTrayComplete(t.color, LANE_X[li], t.dy); } } });
+}
+function canAbsorb(color) {
+  for (let l = 0; l < 4; l++) if (accepts(G.lanes[l][0], color)) return true;
+  const pk = G.pocket;
+  return !!(pk && pk.color === color && pk.eggs.length + pk.inc < 3);
+}
+
+// =================== UPDATE ===================
+function update(dt) {
+  if (!G) return;
+  G.time += dt;
+  stepFx(dt);
+  if (G.state === 'fail' || G.state === 'won') return;
+  computeReach();
+  stepBelt(dt); stepShooters(dt); stepEmitters(dt); stepFlights(dt); stepPocket(dt); stepPortals(dt); stepTrays(dt);
+  G.taps = getTappables();
+  checkEnd(dt);
+}
+function stepBelt(dt) {
+  const move = SPEED * dt, prev = G.off;
+  G.off = (G.off + move) % BL.L;
+  for (let i = 0; i < NS; i++) {
+    const sp = (prev + i * SP) % BL.L;
+    const crossed = P => { const d = ((P - sp) % BL.L + BL.L) % BL.L; return d < move; };
+    for (let l = 0; l < 4; l++) {
+      const e = G.slots[i];
+      if (e && crossed(S_LANE[l]) && accepts(G.lanes[l][0], e.color)) {
+        const p = beltPos(S_LANE[l]); G.slots[i] = null; eggToTray(l, G.lanes[l][0], e.color, p.x, p.y);
+      }
+    }
+    const pk = G.pocket, e = G.slots[i];
+    if (pk && e && e.color === pk.color && crossed(S_POCK) && pk.eggs.length + pk.inc < 3 && !canAbsorbTray(e.color)) {
+      G.slots[i] = null; const p = beltPos(S_POCK); const slot = pk.eggs.length + pk.inc; pk.inc++;
+      G.flights.push({ kind:'pock', color:e.color, x0:p.x, y0:p.y, tgt:() => ({ x:POCK.x + (slot - 1) * 22, y:POCK.y }), t:0, dur:0.28, arc:14, done:() => { pk.inc--; pk.eggs.push(e.color); } });
+    }
+    if (!G.slots[i] && G.funnel.length && crossed(S_ENTRY)) G.slots[i] = { color:G.funnel.shift(), a:0 };
+  }
+  for (const e of G.slots) if (e && e.a < 1) e.a = Math.min(1, e.a + dt * 6);
+}
+function canAbsorbTray(color) { for (let l = 0; l < 4; l++) if (accepts(G.lanes[l][0], color)) return true; return false; }
+function stepShooters(dt) {
+  let qi = 0;
+  for (const sh of G.shooters.slice()) {
+    let tx, ty;
+    if (sh.spot >= 0) { tx = SPOTS[sh.spot].x; ty = SPOTS[sh.spot].y; }
+    else { tx = 232 + Math.min(qi, 2) * 38; ty = 530; qi++; }
+    const k = Math.min(1, dt * 9); sh.x += (tx - sh.x) * k; sh.y += (ty - sh.y) * k;
+    if (sh.spot < 0 || Math.hypot(tx - sh.x, ty - sh.y) > 8) continue;
+    sh.fireT -= dt;
+    if (sh.eggs > 0 && sh.fireT <= 0 && G.funnel.length + G.funIn < FUN.cap) {
+      sh.eggs--; sh.fireT = FIRE_DT; sh.kick = 1;
+      const side = sh.spot === 0 ? -1 : 1;
+      fireToFunnel(sh.color, sh.x, sh.y - 20, sh.x, FUN.top - 6, 0.36, side);
+    }
+    if (sh.kick) sh.kick = Math.max(0, sh.kick - dt * 8);
+    if (sh.eggs <= 0) {
+      G.shooters.splice(G.shooters.indexOf(sh), 1);
+      burst(sh.x, sh.y, '#ffffff', 12); burst(sh.x, sh.y, COL[sh.color], 8);
+      G.emitters.push(...sh.after);
+      assignSpots();
+    }
+  }
+}
+function fireToFunnel(color, x, y, cx, cy, dur, side) {
+  G.funIn++;
+  G.flights.push({ kind:'fun', color, x0:x, y0:y, cx, cy, tgt:() => ({ x:FUN.x + side * 12, y:FUN.top + 6 }), t:0, dur,
+    done:() => { G.funIn--; G.funnel.push(color); } });
+}
+function stepEmitters(dt) {
+  for (const e of G.emitters.slice()) {
+    e.t -= dt;
+    if (e.t <= 0 && e.n > 0 && G.funnel.length + G.funIn < FUN.cap) {
+      e.n--; e.t = 0.13;
+      fireToFunnel(e.color, e.x, e.y, (e.x + FUN.x) / 2, 300, 0.6, 0);
+    }
+    if (e.n <= 0) G.emitters.splice(G.emitters.indexOf(e), 1);
+  }
+}
+function stepFlights(dt) {
+  for (const f of G.flights.slice()) {
+    f.t += dt;
+    if (f.t >= f.dur) { G.flights.splice(G.flights.indexOf(f), 1); f.done && f.done(); }
+  }
+}
+function flightPos(f) {
+  const p = clamp(f.t / f.dur, 0, 1), T = f.tgt();
+  if (f.cx != null) {
+    const u = 1 - p;
+    return { x:u * u * f.x0 + 2 * u * p * f.cx + p * p * T.x, y:u * u * f.y0 + 2 * u * p * f.cy + p * p * T.y };
+  }
+  const e = ease(p);
+  return { x:lerp(f.x0, T.x, e), y:lerp(f.y0, T.y, e) - Math.sin(Math.PI * p) * (f.arc || 0) };
+}
+function stepPocket(dt) {
+  const pk = G.pocket; if (!pk) return;
+  pk.cool -= dt;
+  if (!pk.eggs.length || pk.cool > 0) return;
+  for (let l = 0; l < 4; l++) {
+    const t = G.lanes[l][0];
+    if (accepts(t, pk.color)) {
+      const col = pk.eggs.pop(), x = POCK.x + (pk.eggs.length - 1) * 22;
+      eggToTray(l, t, col, x, POCK.y); pk.cool = 0.16; return;
+    }
+  }
+}
+function stepPortals(dt) {
+  for (const q of G.portals) {
+    if (q.done) continue;
+    const [er, ec] = q.exit;
+    if (G.cells[er][ec]) { q.cool = 0.3; continue; }
+    q.cool -= dt; if (q.cool > 0) continue;
+    const col = q.slots[q.next];
+    const from = cellXY(q.r + (q.next >> 1), q.c + (q.next & 1)), to = cellXY(er, ec);
+    G.cells[er][ec] = chick(col, { born:G.time });
+    q.slots[q.next] = null; q.next++;
+    burst(from.x, from.y, '#b36bff', 12); burst(to.x, to.y, '#b36bff', 16);
+    if (q.next >= 4) { q.done = true; for (let i = 0; i < 4; i++) G.cells[q.r + (i >> 1)][q.c + (i & 1)] = null; }
+  }
+}
+function stepTrays(dt) {
+  for (const lane of G.lanes) {
+    if (lane[0] && lane[0].done) { lane[0].popT += dt; if (lane[0].popT > 0.34) lane.shift(); }
+    lane.forEach((t, j) => {
+      const ty = FRONT_Y - j * ROW_GAP; t.dy += (ty - t.dy) * Math.min(1, dt * 11);
+      t.bump = Math.max(0, t.bump - dt * 4); t.flash = Math.max(0, t.flash - dt * 1.5);
+    });
+  }
+}
+function stepFx(dt) {
+  for (const p of G.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; p.life -= dt; }
+  G.parts = G.parts.filter(p => p.life > 0);
+  for (const t of G.texts) { t.y -= 30 * dt; t.life -= dt; }
+  G.texts = G.texts.filter(t => t.life > 0);
+  for (const f of G.fx) f.t += dt;
+  G.fx = G.fx.filter(f => f.t < 0.9);
+  for (const v of G.covers) { v.disp += (v.opened - v.disp) * Math.min(1, dt * 7); if (v.gone) v.fade = Math.max(0, v.fade - dt * 2.5); }
+  for (const m of G.makers) { m.pulse = Math.max(0, (m.pulse || 0) - dt * 3); if (m.gone) m.fade = Math.max(0, (m.fade || 0) - dt * 3); }
+  for (const p of G.perches) p.ang *= Math.max(0, 1 - dt * 9), Math.abs(p.ang) < 0.002 && (p.ang = 0);
+  for (const row of G.cells) for (const x of row) {
+    if (!x) continue;
+    if (x.k === 'fox' && x.t < 1) x.t = Math.min(1, x.t + dt * 3.2);
+    if (x.shake) x.shake = Math.max(0, x.shake - dt * 3);
+  }
+}
+function checkEnd(dt) {
+  const empty = G.lanes.every(l => l.length === 0);
+  if (empty) { G.winT += dt; if (G.winT > 0.6) win(); return; }
+  const full = G.slots.every(Boolean);
+  const anyMatch = G.slots.some(e => e && canAbsorb(e.color));
+  const trayFlights = G.flights.some(f => f.kind === 'tray' || f.kind === 'key');
+  if (full && !anyMatch && !trayFlights) { G.failT += dt; if (G.failT > 1.2) fail('belt'); } else G.failT = 0;
+  const busy = G.taps.length || G.shooters.length || G.emitters.length || G.funnel.length || G.flights.length ||
+    G.lanes.some(l => l[0] && l[0].done) || G.portals.some(q => !q.done && !G.cells[q.exit[0]][q.exit[1]]) ||
+    (G.pocket && G.pocket.eggs.length && canAbsorbTray(G.pocket.color));
+  if (!busy && !anyMatch) { G.stallT += dt; if (G.stallT > 1.6) fail('stall'); } else G.stallT = 0;
+}
+function playOn() {
+  const cnt = {};
+  G.slots.forEach(e => e && (cnt[e.color] = (cnt[e.color] || 0) + 1));
+  const idx = G.slots.map((e, i) => i).filter(i => G.slots[i]).sort((a, b) => cnt[G.slots[b].color] - cnt[G.slots[a].color]);
+  const removed = [];
+  idx.slice(0, 9).forEach(i => { removed.push(G.slots[i].color); G.slots[i] = null; });
+  while (G.funnel.length) removed.push(G.funnel.shift());
+  const by = {};
+  removed.forEach(c => by[c] = (by[c] || 0) + 1);
+  // Atış alanındaki tavuklar ve makine yumurtaları da yedeğe alınır; oyuncu kontrolü tamamen geri kazanır
+  for (const sh of G.shooters) { by[sh.color] = (by[sh.color] || 0) + sh.eggs; sh.after.forEach(a => by[a.color] = (by[a.color] || 0) + a.n); }
+  for (const e of G.emitters) by[e.color] = (by[e.color] || 0) + e.n;
+  G.shooters = []; G.emitters = [];
+  for (const c in by) { let n = by[c]; while (n > 0) { const e = Math.min(9, n); G.bench.push({ color:c, eggs:e }); n -= e; } }
+  G.continues++; G.state = 'play'; G.failT = 0; G.stallT = 0;
+}
+
+// =================== FX ===================
+function burst(x, y, color, n) {
+  if (!G) return;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 220;
+    G.parts.push({ x, y, vx:Math.cos(a) * s, vy:Math.sin(a) * s - 120, life:0.45 + Math.random() * 0.35, max:0.8, color, r:2 + Math.random() * 3.5 });
+  }
+}
+function floatText(x, y, str, color) { if (G) G.texts.push({ x, y, str, color, life:1.3 }); }
+
+// =================== DRAW PRIMITIVES ===================
+function drawEgg(x, y, r, col, a) {
+  const c = COL[col] || '#ddd';
+  ctx.save(); if (a != null) ctx.globalAlpha *= a;
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .45, r * .1, x, y, r * 1.15);
+  g.addColorStop(0, shade(c, .65)); g.addColorStop(.45, c); g.addColorStop(1, shade(c, -.35));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.bezierCurveTo(x + r * .78, y - r, x + r * .86, y + r * .9, x, y + r * .92);
+  ctx.bezierCurveTo(x - r * .86, y + r * .9, x - r * .78, y - r, x, y - r);
+  ctx.fill(); ctx.strokeStyle = shade(c, -.45); ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+}
+function drawKeyIcon(x, y, s, rot) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot || -0.6); ctx.scale(s / 20, s / 20);
+  ctx.fillStyle = '#ffcc1a'; ctx.strokeStyle = '#a86f00'; ctx.lineWidth = 1.6;
+  ell(-6, 0, 5.5, 5.5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#a86f00'; ell(-6, 0, 2, 2); ctx.fill();
+  ctx.fillStyle = '#ffcc1a'; rr(-1, -1.8, 12, 3.6, 1.5); ctx.fill(); ctx.stroke();
+  rr(6, 1, 2.6, 4, 1); ctx.fill(); ctx.stroke(); rr(9.5, 1, 2.2, 3, 1); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function drawChicken(x, y, s, col, o) {
+  o = o || {};
+  const c = COL[col];
+  ctx.save(); ctx.translate(x, y); const k = s / 60; ctx.scale(k, k);
+  if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ell(0, 21, 17, 5); ctx.fill();
+  // comb
+  ctx.fillStyle = col === 'R' || col === 'K' ? '#b3122a' : '#ff3346';
+  ell(-5, -17, 4.2, 4.6); ctx.fill(); ell(0, -20, 4.6, 5); ctx.fill(); ell(5, -17, 4.2, 4.6); ctx.fill();
+  // body
+  const g = ctx.createRadialGradient(-7, -9, 2, 0, 3, 25);
+  g.addColorStop(0, shade(c, .5)); g.addColorStop(.5, c); g.addColorStop(1, shade(c, -.3));
+  ctx.fillStyle = g; ell(0, 3, 20.5, 19); ctx.fill();
+  ctx.lineWidth = 1.6; ctx.strokeStyle = shade(c, -.45); ctx.stroke();
+  // wings
+  ctx.fillStyle = shade(c, -.14); ell(-16.5, 8, 5.5, 8.5); ctx.fill(); ell(16.5, 8, 5.5, 8.5); ctx.fill();
+  // belly
+  ctx.fillStyle = rgba('#ffffff', .22); ell(0, 12, 10, 7); ctx.fill();
+  // eyes
+  ctx.fillStyle = '#fff'; ell(-6.5, -4, 4.4, 5); ctx.fill(); ell(6.5, -4, 4.4, 5); ctx.fill();
+  ctx.fillStyle = '#1b1b24'; ell(-6, -3.2, 2.5, 2.9); ctx.fill(); ell(7, -3.2, 2.5, 2.9); ctx.fill();
+  ctx.fillStyle = '#fff'; ell(-5.2, -4.4, .9, .9); ctx.fill(); ell(7.8, -4.4, .9, .9); ctx.fill();
+  // beak
+  ctx.fillStyle = col === 'O' || col === 'Y' ? '#ff7a1a' : '#ffae21';
+  ctx.beginPath(); ctx.moveTo(-4.5, 1.5); ctx.lineTo(4.5, 1.5); ctx.lineTo(0, 7.5); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(120,50,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,110,150,.45)'; ell(-12, 3, 3.2, 2.3); ctx.fill(); ell(12, 3, 3.2, 2.3); ctx.fill();
+  if (o.dim) { ctx.fillStyle = 'rgba(28,36,52,.46)'; ell(0, 3, 21.5, 20); ctx.fill(); ell(0, -18, 9, 5); ctx.fill(); }
+  if (o.key) {
+    ctx.fillStyle = '#fff'; ell(15, -15, 9, 9); ctx.fill(); ctx.strokeStyle = '#e0a800'; ctx.lineWidth = 2; ctx.stroke();
+    drawKeyIcon(16, -15, 15, -0.7);
+  }
+  if (o.eggs != null && o.eggs !== 9) {
+    ctx.fillStyle = '#fff'; rr(6, 12, 20, 14, 7); ctx.fill(); ctx.strokeStyle = shade(c, -.4); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#3a2a1a'; ctx.font = '700 11px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(o.eggs, 16, 19.5);
+  }
+  ctx.restore();
+}
+function drawTray(x, y, t, front, scale) {
+  const col = t.color ? COL[t.color] : null;
+  const isLock = t.type === 'lock', isBlank = t.type === 'catch' && !t.color;
+  const base = isLock ? '#a3acb8' : isBlank ? '#f3eee4' : col;
+  ctx.save(); ctx.translate(x, y);
+  const s = (scale || 1) * (1 + t.bump * 0.08);
+  ctx.scale(s, s);
+  if (front && !isLock) { ctx.shadowColor = 'rgba(255,255,255,.9)'; ctx.shadowBlur = 14; }
+  const g = ctx.createLinearGradient(0, -TH / 2, 0, TH / 2);
+  g.addColorStop(0, shade(base, .3)); g.addColorStop(1, shade(base, -.12));
+  ctx.fillStyle = g; rr(-TW / 2, -TH / 2, TW, TH, 11); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.lineWidth = 2.2; ctx.strokeStyle = shade(base, -.42); ctx.stroke();
+  if (isBlank) {
+    const rg = ctx.createLinearGradient(-TW / 2, 0, TW / 2, 0);
+    ['#ff4b4b', '#ffd12e', '#3ccf55', '#3d8bff', '#a65cff'].forEach((c, i) => rg.addColorStop(i / 4, c));
+    ctx.strokeStyle = rg; ctx.lineWidth = 3.2; ctx.setLineDash([7, 5]); ctx.lineDashOffset = -(G ? G.time * 20 : 0);
+    rr(-TW / 2 + 1, -TH / 2 + 1, TW - 2, TH - 2, 10); ctx.stroke(); ctx.setLineDash([]);
+  }
+  for (let k = 0; k < 3; k++) {
+    const cx = (k - 1) * CUP;
+    ctx.fillStyle = shade(base, -.3); ell(cx, 2, 11, 12); ctx.fill();
+    ctx.fillStyle = shade(base, -.45); ell(cx, 4, 8, 8); ctx.fill();
+    if (k < t.filled) drawEgg(cx, -1, 12, t.color);
+    else if (isBlank) { ctx.fillStyle = '#b9ae9c'; ctx.font = '700 14px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('?', cx, 3); }
+  }
+  if (isLock) {
+    ctx.fillStyle = col; rr(-TW / 2 + 6, TH / 2 - 7, TW - 12, 5, 2.5); ctx.fill();
+    ctx.fillStyle = 'rgba(70,80,95,.35)'; rr(-TW / 2, -TH / 2, TW, TH, 11); ctx.fill();
+    // padlock
+    ctx.strokeStyle = '#59616d'; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.arc(-16, -6, 8, Math.PI, 0); ctx.stroke();
+    const lg = ctx.createLinearGradient(0, -8, 0, 12); lg.addColorStop(0, '#ffd84a'); lg.addColorStop(1, '#d99a00');
+    ctx.fillStyle = lg; rr(-28, -7, 24, 19, 5); ctx.fill(); ctx.strokeStyle = '#a06e00'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#6b4a00'; ell(-16, 1, 2.6, 2.6); ctx.fill(); ctx.fillRect(-17, 1, 2, 6);
+    ctx.fillStyle = '#fff'; rr(0, -10, 38, 20, 10); ctx.fill();
+    drawKeyIcon(10, 0, 13, -0.5);
+    ctx.fillStyle = '#3a2a1a'; ctx.font = '700 13px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(t.have + '/' + t.need, 27, 1);
+  }
+  if (!front && !isLock) { ctx.fillStyle = 'rgba(40,30,20,.14)'; rr(-TW / 2, -TH / 2, TW, TH, 11); ctx.fill(); }
+  if (t.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${t.flash * .75})`; rr(-TW / 2, -TH / 2, TW, TH, 11); ctx.fill(); }
+  ctx.restore();
+}
+function drawCrate(x, y, s) {
+  const p = s * 0.05;
+  ctx.fillStyle = '#a4703f'; rr(x + p, y + p, s - 2 * p, s - 2 * p, 8); ctx.fill();
+  ctx.strokeStyle = '#6f4623'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(80,45,15,.45)'; ctx.lineWidth = 2;
+  for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x + p + 3, y + i * s / 3); ctx.lineTo(x + s - p - 3, y + i * s / 3); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,220,170,.35)'; ctx.beginPath(); ctx.moveTo(x + p + 5, y + p + 5); ctx.lineTo(x + s - p - 5, y + s - p - 5); ctx.stroke();
+}
+function drawCorn(x, y, s, col, shake) {
+  ctx.save(); ctx.translate(x + Math.sin((shake || 0) * 40) * 3 * (shake || 0), y); const k = s / 60; ctx.scale(k, k);
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ell(0, 22, 15, 4.5); ctx.fill();
+  const c = COL[col];
+  ctx.fillStyle = shade(c, -.15);
+  ctx.beginPath(); ctx.moveTo(-3, 22); ctx.quadraticCurveTo(-22, 8, -12, -14); ctx.quadraticCurveTo(-10, 6, 0, 20); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(3, 22); ctx.quadraticCurveTo(22, 8, 12, -14); ctx.quadraticCurveTo(10, 6, 0, 20); ctx.fill();
+  const g = ctx.createLinearGradient(-9, 0, 9, 0); g.addColorStop(0, '#f2b01a'); g.addColorStop(.5, '#ffe36b'); g.addColorStop(1, '#e19b0f');
+  ctx.fillStyle = g; ell(0, 0, 9.5, 20); ctx.fill(); ctx.strokeStyle = '#b87a06'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.fillStyle = 'rgba(170,110,0,.4)';
+  for (let r = -15; r <= 15; r += 5) for (let q = -5; q <= 5; q += 5) { if (Math.abs(q) === 5 && Math.abs(r) > 12) continue; ell(q, r, 1.4, 1.4); ctx.fill(); }
+  // colored top
+  ctx.fillStyle = c; ell(0, -20, 8, 6); ctx.fill(); ctx.strokeStyle = shade(c, -.45); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = rgba('#ffffff', .5); ell(-2.5, -22, 2.5, 1.6); ctx.fill();
+  ctx.restore();
+}
+function drawFox(x, y, s, n, hop) {
+  ctx.save(); ctx.translate(x, y - (hop || 0)); const k = s / 60; ctx.scale(k, k);
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ell(0, 22 + (hop || 0) / k, 17, 5); ctx.fill();
+  // tail
+  ctx.fillStyle = '#ff7b22'; ctx.beginPath(); ctx.ellipse(16, 12, 7, 14, -0.9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(23, 5, 3.5, 5, -0.9, 0, 7); ctx.fill();
+  // ears
+  ctx.fillStyle = '#e8621a';
+  ctx.beginPath(); ctx.moveTo(-17, -6); ctx.lineTo(-13, -24); ctx.lineTo(-3, -12); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(17, -6); ctx.lineTo(13, -24); ctx.lineTo(3, -12); ctx.fill();
+  ctx.fillStyle = '#3b1d0c';
+  ctx.beginPath(); ctx.moveTo(-14, -10); ctx.lineTo(-12.5, -19); ctx.lineTo(-7, -12); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(14, -10); ctx.lineTo(12.5, -19); ctx.lineTo(7, -12); ctx.fill();
+  // head
+  const g = ctx.createRadialGradient(-5, -6, 2, 0, 2, 22); g.addColorStop(0, '#ffa04d'); g.addColorStop(1, '#e85d14');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-19, -6); ctx.quadraticCurveTo(0, -18, 19, -6); ctx.quadraticCurveTo(14, 16, 0, 18); ctx.quadraticCurveTo(-14, 16, -19, -6); ctx.fill();
+  ctx.strokeStyle = '#a53d06'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(-12, 4); ctx.quadraticCurveTo(0, 0, 12, 4); ctx.quadraticCurveTo(6, 17, 0, 18); ctx.quadraticCurveTo(-6, 17, -12, 4); ctx.fill();
+  ctx.fillStyle = '#1b1b24'; ell(-7, -2, 2.4, 3); ctx.fill(); ell(7, -2, 2.4, 3); ctx.fill(); ell(0, 12, 3, 2.2); ctx.fill();
+  ctx.fillStyle = '#fff'; ell(-6.3, -3, .8, .8); ctx.fill(); ell(7.7, -3, .8, .8); ctx.fill();
+  // count
+  if (n > 0) { ctx.fillStyle = "#fff"; ell(-17, 14, 9, 9); ctx.fill(); ctx.strokeStyle = "#e85d14"; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.fillStyle = "#3a2a1a"; ctx.font = "700 13px Fredoka,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(n, -17, 15); }
+  ctx.restore();
+}
+function drawMaker(x, y, s, col, n, pulse) {
+  // x,y = top-left of 2x2, s = cell
+  const w = s * 2, p = s * 0.08;
+  ctx.save();
+  ctx.translate(x + w / 2, y + w / 2); const sc = 1 + (pulse || 0) * 0.06; ctx.scale(sc, sc); ctx.translate(-w / 2, -w / 2);
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; rr(p + 3, p + 6, w - 2 * p, w - 2 * p, 16); ctx.fill();
+  const g = ctx.createLinearGradient(0, p, 0, w - p); g.addColorStop(0, '#e9eef3'); g.addColorStop(1, '#9aa6b3');
+  ctx.fillStyle = g; rr(p, p, w - 2 * p, w - 2 * p, 16); ctx.fill(); ctx.strokeStyle = '#5c6875'; ctx.lineWidth = 2.5; ctx.stroke();
+  // color band
+  ctx.fillStyle = COL[col]; rr(p + 6, p + 6, w - 2 * p - 12, w * 0.18, 8); ctx.fill();
+  ctx.strokeStyle = shade(COL[col], -.4); ctx.lineWidth = 1.5; ctx.stroke();
+  // bolts
+  ctx.fillStyle = '#6d7885';
+  [[p + 9, w - p - 9], [w - p - 9, w - p - 9]].forEach(([a, b]) => { ell(a, b, 3, 3); ctx.fill(); });
+  // window with egg
+  ctx.fillStyle = '#2d3642'; ell(w / 2, w * 0.56, w * 0.26, w * 0.26); ctx.fill();
+  ctx.strokeStyle = '#c9d2dc'; ctx.lineWidth = 3; ctx.stroke();
+  drawEgg(w / 2, w * 0.56, w * 0.17, col);
+  // number
+  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(w * 0.16)}px Fredoka,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4; ctx.strokeStyle = shade(COL[col], -.5); ctx.strokeText(n, w / 2, p + 6 + w * 0.09); ctx.fillText(n, w / 2, p + 6 + w * 0.09);
+  ctx.restore();
+}
+function drawNest(x, y, s) {
+  const w = s * 2, cx = x + w / 2, cy = y + w / 2;
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ell(cx, cy + 6, w * 0.5, w * 0.46); ctx.fill();
+  ctx.fillStyle = '#9b6531'; ell(cx, cy, w * 0.5, w * 0.47); ctx.fill();
+  ctx.fillStyle = '#c48a4b'; ell(cx, cy, w * 0.42, w * 0.39); ctx.fill();
+  ctx.fillStyle = '#e8c58f'; ell(cx, cy, w * 0.34, w * 0.31); ctx.fill();
+  ctx.strokeStyle = '#7a4a1e'; ctx.lineWidth = 2;
+  for (let i = 0; i < 26; i++) {
+    const a = i / 26 * Math.PI * 2, r1 = w * 0.4, r2 = w * 0.5;
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1 * .93); ctx.lineTo(cx + Math.cos(a + .35) * r2, cy + Math.sin(a + .35) * r2 * .93); ctx.stroke();
+  }
+}
+function drawBigEgg(x, y, s, col, glow, t) {
+  ctx.save();
+  if (glow) { const a = 0.5 + 0.5 * Math.sin(t * 6); ctx.shadowColor = '#fff6b0'; ctx.shadowBlur = 12 + a * 16; }
+  drawEgg(x, y + Math.sin(t * 8) * (glow ? 1.5 : 0), s * 0.3, col);
+  ctx.restore();
+  // speckles
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ell(x + s * .06, y + s * .08, s * .03, s * .025); ctx.fill(); ell(x - s * .07, y + s * .02, s * .02, s * .018); ctx.fill();
+  if (glow) {
+    ctx.strokeStyle = 'rgba(60,30,0,.6)'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(x - s * .14, y - s * .02); ctx.lineTo(x - s * .06, y + s * .04); ctx.lineTo(x, y - s * .03); ctx.lineTo(x + s * .07, y + s * .04); ctx.lineTo(x + s * .14, y - s * .02); ctx.stroke();
+  }
+}
+function drawPortalFrame(x, y, s, t) {
+  const w = s * 2, cx = x + w / 2, cy = y + w / 2;
+  const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, w * 0.62); g.addColorStop(0, '#3a1466'); g.addColorStop(1, '#7c3cd6');
+  ctx.fillStyle = g; rr(x + 3, y + 3, w - 6, w - 6, 18); ctx.fill();
+  ctx.save(); rr(x + 3, y + 3, w - 6, w - 6, 18); ctx.clip();
+  ctx.translate(cx, cy); ctx.rotate(t * 0.8);
+  for (let i = 0; i < 5; i++) { ctx.strokeStyle = `rgba(215,170,255,${0.18 + i * 0.06})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, w * (0.12 + i * 0.09), i, i + 3.6); ctx.stroke(); }
+  ctx.restore();
+  ctx.strokeStyle = '#d6a8ff'; ctx.lineWidth = 3; rr(x + 3, y + 3, w - 6, w - 6, 18); ctx.stroke();
+}
+function drawPortalExit(x, y, s, t) {
+  ctx.save(); ctx.translate(x, y + s * .28);
+  for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(178,100,255,${0.8 - i * .22})`; ctx.lineWidth = 3; ell(0, 0, s * (0.3 + i * 0.07 + 0.02 * Math.sin(t * 4 + i)), s * (0.1 + i * 0.03)); ctx.stroke(); }
+  ctx.restore();
+}
+function drawPerchBase(cx, cy, s, ang) {
+  const R = s * 0.98;
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ell(cx, cy + 7, R, R * 0.96); ctx.fill();
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+  const g = ctx.createRadialGradient(-R * .3, -R * .3, 4, 0, 0, R); g.addColorStop(0, '#e3b27a'); g.addColorStop(1, '#a26a33');
+  ctx.fillStyle = g; ell(0, 0, R, R); ctx.fill(); ctx.strokeStyle = '#6d4520'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = 'rgba(110,70,30,.5)'; ctx.lineWidth = 3;
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * R * .95, Math.sin(a) * R * .95); ctx.stroke(); }
+  ctx.fillStyle = '#7b4c22'; ell(0, 0, R * .16, R * .16); ctx.fill();
+  ctx.restore();
+}
+function drawPocket(x, y, col, eggs, glow) {
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; rr(x - 42, y - 13, 84, 32, 12); ctx.fill();
+  const g = ctx.createLinearGradient(0, y - 16, 0, y + 16); g.addColorStop(0, shade(COL[col], .55)); g.addColorStop(1, shade(COL[col], .1));
+  ctx.fillStyle = g; rr(x - 42, y - 16, 84, 32, 12); ctx.fill(); ctx.strokeStyle = shade(COL[col], -.35); ctx.lineWidth = 2.2; ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    const cx = x + (i - 1) * 22;
+    ctx.fillStyle = shade(COL[col], -.3); ell(cx, y + 2, 9, 10); ctx.fill();
+    if (i < eggs) drawEgg(cx, y, 10, col);
+  }
+}
+function drawCoverMat(x, y, w, h, dir, alpha, cell) {
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(x + 2, y + 5, w, h, 10); ctx.fill();
+  const g = ctx.createLinearGradient(x, y, x, y + h); g.addColorStop(0, '#f0d38c'); g.addColorStop(1, '#d9b060');
+  ctx.fillStyle = g; rr(x, y, w, h, 10); ctx.fill();
+  ctx.save(); rr(x, y, w, h, 10); ctx.clip();
+  const vertical = dir === 'down' || dir === 'up';
+  ctx.strokeStyle = 'rgba(150,105,30,.45)'; ctx.lineWidth = 2;
+  if (vertical) for (let yy = y + 6; yy < y + h; yy += 7) { ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke(); }
+  else for (let xx = x + 6; xx < x + w; xx += 7) { ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + h); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(120,80,20,.3)'; ctx.lineWidth = 1;
+  if (vertical) for (let xx = x + 10; xx < x + w; xx += 16) { ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + h); ctx.stroke(); }
+  ctx.restore();
+  ctx.strokeStyle = '#a57a2c'; ctx.lineWidth = 2.5; rr(x, y, w, h, 10); ctx.stroke();
+  // roll on leading edge
+  const RT = 16;
+  const rg = vertical ? ctx.createLinearGradient(0, 0, 0, RT) : ctx.createLinearGradient(0, 0, RT, 0);
+  rg.addColorStop(0, '#fbe3a4'); rg.addColorStop(.5, '#d4a24a'); rg.addColorStop(1, '#a8772a');
+  ctx.save();
+  if (dir === 'down') ctx.translate(x - 4, y - RT / 2);
+  else if (dir === 'up') ctx.translate(x - 4, y + h - RT / 2);
+  else if (dir === 'right') ctx.translate(x - RT / 2, y - 4);
+  else ctx.translate(x + w - RT / 2, y - 4);
+  ctx.fillStyle = rg;
+  if (vertical) { rr(0, 0, w + 8, RT, RT / 2); } else { rr(0, 0, RT, h + 8, RT / 2); }
+  ctx.fill(); ctx.strokeStyle = '#8a5f1c'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+  // arrow
+  const ax = x + w / 2, ay = y + h / 2, a = { down:Math.PI / 2, up:-Math.PI / 2, right:0, left:Math.PI }[dir];
+  ctx.save(); ctx.translate(ax, ay); ctx.rotate(a);
+  const L = Math.min(cell * 0.9, (vertical ? h : w) * 0.35 + 10);
+  ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.strokeStyle = 'rgba(130,85,20,.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-L / 2, -6); ctx.lineTo(L / 4, -6); ctx.lineTo(L / 4, -14); ctx.lineTo(L / 2 + 6, 0); ctx.lineTo(L / 4, 14); ctx.lineTo(L / 4, 6); ctx.lineTo(-L / 2, 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
+// =================== RENDER ===================
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  if (!G) { drawBackground(); return; }
+  drawBackground();
+  drawTrays();
+  drawPipes();
+  drawBelt();
+  drawFunnel();
+  if (G.pocket) drawPocket(POCK.x, POCK.y, G.pocket.color, G.pocket.eggs.length, true);
+  drawLaunch();
+  drawBoard();
+  drawFlights();
+  for (const p of G.parts) { ctx.globalAlpha = clamp(p.life / 0.5, 0, 1); ctx.fillStyle = p.color; ell(p.x, p.y, p.r, p.r); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  for (const t of G.texts) {
+    ctx.globalAlpha = clamp(t.life, 0, 1); ctx.font = '700 18px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.strokeText(t.str, t.x, t.y); ctx.fillStyle = t.color; ctx.fillText(t.str, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawBackground() {
+  let g = ctx.createLinearGradient(0, 0, 0, 340);
+  g.addColorStop(0, '#7fcdf7'); g.addColorStop(1, '#d6f1ff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 340);
+  // clouds
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  [[70, 92, 1], [470, 80, .8], [300, 70, .6]].forEach(([x, y, s]) => { ell(x, y, 34 * s, 12 * s); ctx.fill(); ell(x + 18 * s, y - 8 * s, 20 * s, 12 * s); ctx.fill(); ell(x - 16 * s, y - 5 * s, 16 * s, 10 * s); ctx.fill(); });
+  g = ctx.createLinearGradient(0, 330, 0, 580);
+  g.addColorStop(0, '#c9a574'); g.addColorStop(1, '#b08655');
+  ctx.fillStyle = g; ctx.fillRect(0, 330, W, 250);
+  ctx.strokeStyle = 'rgba(90,55,25,.18)'; ctx.lineWidth = 2;
+  for (let y = 350; y < 580; y += 26) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  g = ctx.createLinearGradient(0, 580, 0, H);
+  g.addColorStop(0, '#86cf56'); g.addColorStop(1, '#5aa83a');
+  ctx.fillStyle = g; ctx.fillRect(0, 580, W, H - 580);
+  ctx.fillStyle = 'rgba(40,90,20,.18)';
+  for (let i = 0; i < 40; i++) { const x = (i * 97) % W, y = 590 + ((i * 53) % 380); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3, y - 9); ctx.lineTo(x + 6, y); ctx.fill(); }
+}
+function drawTrays() {
+  // shelf
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(62, 106, 416, 218, 20); ctx.fill();
+  ctx.fillStyle = '#b77c45'; rr(56, FRONT_Y + 24, 428, 12, 6); ctx.fill();
+  ctx.fillStyle = '#8c5a2c'; rr(56, FRONT_Y + 32, 428, 5, 3); ctx.fill();
+  for (let l = 0; l < 4; l++) {
+    const lane = G.lanes[l];
+    const extra = lane.length - VIS;
+    for (let j = Math.min(lane.length, VIS + 1) - 1; j >= 0; j--) {
+      const t = lane[j];
+      if (j >= VIS && t.dy < FRONT_Y - VIS * ROW_GAP + 10) continue;
+      let sc = 1, a = 1;
+      if (t.done) { const p = t.popT / 0.34; sc = 1 + p * 0.3; a = 1 - p; }
+      ctx.save(); ctx.globalAlpha = a;
+      drawTray(LANE_X[l], t.dy, t, j === 0, sc * (j === 0 ? 1 : 0.94));
+      ctx.restore();
+    }
+    if (extra > 0) {
+      ctx.fillStyle = 'rgba(58,42,26,.75)'; rr(LANE_X[l] - 20, 98, 40, 20, 10); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 13px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+' + extra, LANE_X[l], 108.5);
+    }
+  }
+}
+function drawPipes() {
+  for (const s of SPOTS) {
+    const side = s.x < 270 ? -1 : 1;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#6b7684'; ctx.lineWidth = 26;
+    ctx.beginPath(); ctx.moveTo(s.x, s.y - 18); ctx.quadraticCurveTo(s.x, FUN.top - 6, FUN.x + side * 30, FUN.top - 2); ctx.stroke();
+    ctx.strokeStyle = '#aab6c3'; ctx.lineWidth = 18; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 5; ctx.stroke();
+  }
+}
+function beltPath() {
+  ctx.beginPath();
+  ctx.moveTo(BL.x0, BL.yt); ctx.lineTo(BL.x1, BL.yt);
+  ctx.arc(BL.x1, BL.cy, BL.r, -Math.PI / 2, Math.PI / 2);
+  ctx.lineTo(BL.x0, BL.yb);
+  ctx.arc(BL.x0, BL.cy, BL.r, Math.PI / 2, Math.PI * 1.5);
+  ctx.closePath();
+}
+function drawBelt() {
+  beltPath(); ctx.lineWidth = 36; ctx.strokeStyle = '#2f3540'; ctx.stroke();
+  beltPath(); ctx.lineWidth = 28; ctx.strokeStyle = '#4d5563'; ctx.stroke();
+  ctx.setLineDash([2, SP - 2]); ctx.lineDashOffset = -G.off; beltPath(); ctx.lineWidth = 28; ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.stroke(); ctx.setLineDash([]);
+  // lane pickup markers
+  for (let l = 0; l < 4; l++) {
+    const t = G.lanes[l][0]; if (!t) continue;
+    const c = t.type === 'lock' ? '#8a939e' : t.color ? COL[t.color] : '#ffffff';
+    ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(LANE_X[l] - 7, BL.yt - 19); ctx.lineTo(LANE_X[l] + 7, BL.yt - 19); ctx.lineTo(LANE_X[l], BL.yt - 27); ctx.fill();
+  }
+  let n = 0;
+  for (let i = 0; i < NS; i++) {
+    const e = G.slots[i]; if (!e) continue; n++;
+    const p = beltPos(G.off + i * SP);
+    drawEgg(p.x, p.y, 10.5 * (0.5 + e.a * 0.5), e.color);
+  }
+  // counter
+  const full = n >= NS - 3;
+  ctx.fillStyle = full ? '#ff4b4b' : 'rgba(40,30,20,.72)'; rr(110, 388, 74, 26, 13); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '700 14px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(n + ' / ' + NS, 147, 401.5);
+}
+function drawFunnel() {
+  const tl = FUN.x - 46, tr = FUN.x + 46, bl = FUN.x - 13, br = FUN.x + 13;
+  ctx.fillStyle = 'rgba(255,255,255,.28)';
+  ctx.beginPath(); ctx.moveTo(tl, FUN.top); ctx.lineTo(tr, FUN.top); ctx.lineTo(br, FUN.bot); ctx.lineTo(bl, FUN.bot); ctx.closePath(); ctx.fill();
+  const n = G.funnel.length;
+  const pos = [];
+  for (let row = 0; row < 5 && pos.length < 14; row++) {
+    const y = FUN.bot - 8 - row * 12, wHalf = 13 + (FUN.bot - y) * (33 / (FUN.bot - FUN.top));
+    const cnt = Math.max(1, Math.floor((wHalf * 2 - 4) / 17));
+    for (let i = 0; i < cnt; i++) pos.push([FUN.x - (cnt - 1) * 8.5 + i * 17, y]);
+  }
+  for (let i = 0; i < Math.min(n, pos.length); i++) drawEgg(pos[i][0], pos[i][1], 8, G.funnel[i]);
+  ctx.strokeStyle = '#e8eef5'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(tl - 4, FUN.top - 4); ctx.lineTo(bl, FUN.bot); ctx.lineTo(bl, FUN.bot + 4); ctx.moveTo(tr + 4, FUN.top - 4); ctx.lineTo(br, FUN.bot); ctx.lineTo(br, FUN.bot + 4); ctx.stroke();
+  if (n > 0) {
+    const hot = n >= FUN.cap - 3;
+    ctx.fillStyle = hot ? '#ff4b4b' : '#fff'; rr(FUN.x + 38, FUN.top + 2, 44, 20, 10); ctx.fill();
+    ctx.fillStyle = hot ? '#fff' : '#3a2a1a'; ctx.font = '700 12px Fredoka,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n + '/' + FUN.cap, FUN.x + 60, FUN.top + 12.5);
+  }
+}
+function drawLaunch() {
+  for (const s of SPOTS) {
+    ctx.fillStyle = 'rgba(60,35,15,.35)'; ell(s.x, s.y + 20, 34, 11); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.setLineDash([6, 6]); ctx.lineDashOffset = G.time * 12; ctx.lineWidth = 2.5; ell(s.x, s.y + 20, 34, 11); ctx.stroke(); ctx.setLineDash([]);
+  }
+  let qi = 0;
+  for (const sh of G.shooters) {
+    const at = sh.spot >= 0;
+    const sz = at ? 56 : 36;
+    const kick = sh.kick ? sh.kick * 4 : 0;
+    drawChicken(sh.x, sh.y - kick, sz, sh.color, { eggs:sh.eggs });
+    if (!at) qi++;
+  }
+  if (G.bench.length) {
+    ctx.fillStyle = 'rgba(40,30,20,.45)'; rr(270 - G.bench.length * 20 - 8, 556, G.bench.length * 40 + 16, 42, 14); ctx.fill();
+    G.bench.forEach((b, i) => {
+      b.x = 270 - (G.bench.length - 1) * 20 + i * 40; b.y = 577;
+      drawChicken(b.x, b.y + Math.sin(G.time * 5 + i) * 1.5, 34, b.color, { eggs:b.eggs });
+    });
+  }
+}
+function drawBoard() {
+  const { gx, gy, cell, rows, cols } = G;
+  const bw = cols * cell, bh = rows * cell;
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; rr(gx - 12, gy - 8, bw + 24, bh + 24, 20); ctx.fill();
+  ctx.fillStyle = '#8a5a2e'; rr(gx - 12, gy - 12, bw + 24, bh + 24, 20); ctx.fill();
+  ctx.fillStyle = '#9ed96c'; rr(gx - 4, gy - 4, bw + 8, bh + 8, 14); ctx.fill();
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    if ((r + c) % 2) { ctx.fillStyle = 'rgba(60,130,30,.12)'; ctx.fillRect(gx + c * cell, gy + r * cell, cell, cell); }
+  }
+  // highlight reach
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (G.reach && G.reach[r][c]) { ctx.fillStyle = 'rgba(255,255,220,.22)'; ctx.fillRect(gx + c * cell + 1, gy + r * cell + 1, cell - 2, cell - 2); }
+  // front edge arrow hint
+  ctx.fillStyle = 'rgba(255,255,255,.55)';
+  for (let c = 0; c < cols; c++) { const x = gx + (c + .5) * cell; ctx.beginPath(); ctx.moveTo(x - 6, gy - 5); ctx.lineTo(x + 6, gy - 5); ctx.lineTo(x, gy - 11); ctx.fill(); }
+  const tapSet = new Set(G.taps.filter(t => t.k === 'cell').map(t => t.r * 100 + t.c));
+  // underlays
+  for (const h of G.hatches) if (!h.done) drawNest(gx + h.c * cell, gy + h.r * cell, cell);
+  for (const q of G.portals) {
+    if (!q.done) drawPortalFrame(gx + q.c * cell, gy + q.r * cell, cell, G.time);
+    if (!q.done) { const p = cellXY(q.exit[0], q.exit[1]); drawPortalExit(p.x, p.y, cell, G.time); }
+  }
+  for (const m of G.makers) if (m.gone && m.fade > 0) { ctx.save(); ctx.globalAlpha = m.fade; drawMaker(gx + m.c * cell, gy + m.r * cell, cell, m.color, 0, 0); ctx.restore(); }
+  for (const p of G.perches) if (!p.gone) drawPerchBase(gx + (p.c + 1) * cell, gy + (p.r + 1) * cell, cell, p.ang);
+  // cells
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const x = G.cells[r][c]; if (!x) continue;
+    const cx = gx + (c + .5) * cell, cy = gy + (r + .5) * cell;
+    if (x.k === 'wall') drawCrate(gx + c * cell, gy + r * cell, cell);
+    else if (x.k === 'chick') {
+      if (isCovered(r, c)) continue;
+      const tap = tapSet.has(r * 100 + c);
+      const age = G.time - x.born, pop = age < 0.35 ? 0.5 + 0.5 * Math.sin(age / 0.35 * Math.PI / 2) : 1;
+      const bob = tap ? Math.sin(G.time * 4 + c * 1.3 + r) * 1.5 : 0;
+      const sx = Math.sin((x.shake || 0) * 40) * 4 * (x.shake || 0);
+      const isExit = G.portals.some(q => q.exit[0] === r && q.exit[1] === c);
+      drawChicken(cx + sx, cy + bob - (isExit ? 2 : 0), cell * 0.92 * pop, x.color, { dim:!tap, key:x.key, eggs:x.eggs });
+    }
+    else if (x.k === 'corn') drawCorn(cx, cy, cell * 0.9, x.color, x.shake);
+    else if (x.k === 'fox') {
+      let fx = cx, fy = cy, hop = 0;
+      if (x.from && x.t < 1) { const f = cellXY(x.from.r, x.from.c); fx = lerp(f.x, cx, ease(x.t)); fy = lerp(f.y, cy, ease(x.t)); hop = Math.sin(x.t * Math.PI) * 22; }
+      drawFox(fx, fy, cell * 0.9, x.n, hop);
+    }
+    else if (x.k === 'maker') { if (x.m.r === r && x.m.c === c) drawMaker(gx + c * cell, gy + r * cell, cell, x.m.color, x.m.n, x.m.pulse); }
+    else if (x.k === 'hatch') drawBigEgg(cx, cy, cell, x.color, x.h.next === x.idx, G.time);
+    else if (x.k === 'portal') {
+      const col = x.q.slots[x.idx];
+      if (col) {
+        const nxt = x.q.next === x.idx;
+        if (nxt) { ctx.save(); ctx.shadowColor = '#e4c4ff'; ctx.shadowBlur = 18; }
+        drawChicken(cx, cy, cell * 0.8, col, { dim:!nxt });
+        if (nxt) ctx.restore();
+      }
+    }
+  }
+  // perch chickens
+  for (const p of G.perches) {
+    if (p.gone) continue;
+    const tp = perchTappable(p);
+    for (let i = 0; i < 4; i++) {
+      const col = p.slots[i]; if (!col) continue;
+      const pt = perchSlotXY(p, i, p.ang);
+      const isExit = i === p.exit && Math.abs(p.ang) < 0.05;
+      drawChicken(pt.x, pt.y + (isExit && tp ? Math.sin(G.time * 4) * 1.5 : 0), cell * 0.84, col, { dim:!(isExit && tp) });
+    }
+    // Çıkış oku: çıkış yuvasının dışa bakan (ön) tarafında
+    const e = perchSlotXY(p, p.exit, 0), cy = gy + (p.r + 1) * cell;
+    const ang = e.y < cy ? -Math.PI / 2 : Math.PI / 2;
+    const ax = e.x, ay = e.y + Math.sin(ang) * cell * 0.62;
+    ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#6d4520'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-5, -9); ctx.lineTo(-5, 9); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  // covers
+  for (const v of G.covers) {
+    if (v.fade <= 0) continue;
+    const lines = (v.dir === 'down' || v.dir === 'up') ? v.h : v.w;
+    const d = Math.min(v.disp, lines - 0.001);
+    let x = gx + v.c * cell, y = gy + v.r * cell, w = v.w * cell, h = v.h * cell;
+    if (v.dir === 'down') { y += d * cell; h -= d * cell; }
+    else if (v.dir === 'up') { h -= d * cell; }
+    else if (v.dir === 'right') { x += d * cell; w -= d * cell; }
+    else { w -= d * cell; }
+    if (v.gone) { const k = v.fade; drawCoverMat(x, y, Math.max(w, 10), Math.max(h * k, 10), v.dir, v.fade, cell); }
+    else drawCoverMat(x + 2, y + 2, w - 4, h - 4, v.dir, 1, cell);
+  }
+  for (const m of G.makers) if (m.pulse > 0 && !m.gone) { /* drawn in cells */ }
+  for (const f of G.fx) if (f.k === 'foxrun') {
+    const p = f.t / 0.9;
+    ctx.save(); ctx.globalAlpha = 1 - p; drawFox(f.x, lerp(f.y, f.y + 140, p * p), cell * 0.9, 0, Math.abs(Math.sin(p * 12)) * 10); ctx.restore();
+  }
+}
+function drawFlights() {
+  for (const f of G.flights) {
+    const p = flightPos(f);
+    if (f.kind === 'key') drawKeyIcon(p.x, p.y, 26, G.time * 8);
+    else drawEgg(p.x, p.y, 10, f.color);
+  }
+}
+
+// =================== DOM / UI ===================
+const $ = id => document.getElementById(id);
+let scale = 1, dpr = 1, raf = 0, last = 0;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('eggsort_demo_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('eggsort_demo_' + k, JSON.stringify(v)); } catch (e) {} },
+};
+function fit() {
+  scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  $('stage').style.transform = `translate(-50%,-50%) scale(${scale})`;
+  cv.width = Math.round(W * dpr * scale); cv.height = Math.round(H * dpr * scale);
+  ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+}
+function loop(ts) {
+  const dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
+  if (G) update(dt);
+  render();
+  if (G) $('hTray').textContent = G.lanes.reduce((a, l) => a + l.filter(t => !t.done).length, 0);
+  raf = requestAnimationFrame(loop);
+}
+function toLocal(e) { const r = cv.getBoundingClientRect(); return { x:(e.clientX - r.left) / r.width * W, y:(e.clientY - r.top) / r.height * H }; }
+function onTap(e) {
+  if (!G || G.state !== 'play' || !$('modal').classList.contains('hidden')) return;
+  const { x, y } = toLocal(e);
+  for (let i = 0; i < G.bench.length; i++) { const b = G.bench[i]; if (b.x != null && Math.hypot(x - b.x, y - b.y) < 22) { sendFromBench(i); return; } }
+  const c = Math.floor((x - G.gx) / G.cell), r = Math.floor((y - G.gy) / G.cell);
+  if (r < 0 || c < 0 || r >= G.rows || c >= G.cols) return;
+  const cell = G.cells[r][c];
+  if (!cell) return;
+  if (cell.k === 'chick') { if (tappableCell(r, c)) sendFromCell(r, c); else cell.shake = 1; }
+  else if (cell.k === 'perch') { if (perchTappable(cell.p)) sendFromPerch(cell.p); }
+  else if (cell.k === 'corn' || cell.k === 'hatch') cell.shake = 1;
+}
+function mechIcon(canvas, li) {
+  const c2 = canvas.getContext('2d'), size = canvas.width;
+  const old = ctx; ctx = c2;
+  ctx.save(); ctx.scale(size / 120, size / 120);
+  ctx.fillStyle = '#dff3ff'; ctx.fillRect(0, 0, 120, 120);
+  const t = 1.2;
+  switch (li) {
+    case 0: drawChicken(36, 42, 44, 'R'); drawChicken(84, 42, 44, 'B'); drawCoverMat(14, 58, 92, 50, 'down', 1, 40); break;
+    case 1: drawMaker(12, 12, 48, 'P', 9, 0); break;
+    case 2: drawPortalFrame(16, 16, 44, t); drawChicken(38, 40, 36, 'P'); drawChicken(82, 40, 36, 'O', { dim:true }); drawPortalExit(60, 88, 44, t); drawChicken(60, 84, 38, 'O'); break;
+    case 3: drawNest(12, 14, 48); drawBigEgg(40, 44, 48, 'P', true, t); drawBigEgg(80, 44, 48, 'O', false, t); drawBigEgg(40, 80, 48, 'O', false, t); drawBigEgg(80, 80, 48, 'P', false, t); break;
+    case 4: drawFox(60, 62, 80, 2, 0); break;
+    case 5: drawCorn(38, 62, 70, 'B'); drawCorn(82, 62, 70, 'R'); break;
+    case 6: drawPocket(60, 62, 'P', 2); break;
+    case 7: { const tr = mkTray('lock', 'G', { need:2, have:1, inc:0 }); drawTray(60, 60, tr, true, 1.15); break; }
+    case 8: { const tr = mkTray('catch', null); drawTray(60, 60, tr, true, 1.15); break; }
+    case 9: drawPerchBase(60, 60, 50, 0.3); drawChicken(36, 36, 40, 'P'); drawChicken(84, 36, 40, 'O', { dim:true }); drawChicken(84, 84, 40, 'P', { dim:true }); drawChicken(36, 84, 40, 'O', { dim:true }); break;
+  }
+  ctx.restore(); ctx = old;
+}
+function buildMenu() {
+  const list = $('lvList'); list.innerHTML = '';
+  const done = store.get('done', {});
+  LEVELS.forEach((L, i) => {
+    const b = document.createElement('button'); b.className = 'lv';
+    const c = document.createElement('canvas'); c.width = 116; c.height = 116;
+    b.appendChild(c);
+    const d = document.createElement('div');
+    d.innerHTML = `<div class="num">MEKANİK ${i + 1}</div><div class="nm"></div><div class="en"></div>`;
+    d.querySelector('.nm').textContent = L.name; d.querySelector('.en').textContent = L.en;
+    b.appendChild(d);
+    if (done[i]) { const k = document.createElement('div'); k.className = 'done'; k.textContent = '✓'; b.appendChild(k); }
+    b.onclick = () => startLevel(i, true);
+    list.appendChild(b);
+    mechIcon(c, i);
+  });
+  $('mCoins').textContent = store.get('coins', 0);
+}
+function showMenu() {
+  G = null; $('menu').classList.remove('hidden'); $('hud').classList.add('hidden'); hideModal(); buildMenu();
+}
+function startLevel(i, tutorial) {
+  buildLevel(i);
+  $('menu').classList.add('hidden'); $('hud').classList.remove('hidden');
+  $('hNum').textContent = `Bölüm ${i + 1} / ${LEVELS.length}`; $('hName').textContent = LEVELS[i].name;
+  if (tutorial) showTutorial(i); else hideModal();
+}
+function showModal(html, setup) { $('mCard').innerHTML = html; $('modal').classList.remove('hidden'); if (setup) setup($('mCard')); }
+function hideModal() { $('modal').classList.add('hidden'); }
+function showTutorial(i) {
+  const L = LEVELS[i];
+  const paused = G.state; G.state = 'fail';
+  showModal(`<span class="badge">YENİ MEKANİK · UNLOCKED</span>
+    <h2></h2><div class="en"></div><canvas width="260" height="260"></canvas>
+    <p class="d"></p><div class="diff"><b>Mevcutlardan farkı:</b> <span></span></div><div class="tip"><b>İpucu:</b> <span></span></div>
+    <div class="btns"><button class="btn">Oyna</button></div>`, card => {
+    card.querySelector('h2').textContent = L.name; card.querySelector('.en').textContent = L.en;
+    card.querySelector('.d').textContent = L.desc;
+    card.querySelector('.diff span').textContent = L.diff; card.querySelector('.tip span').textContent = L.tip;
+    mechIcon(card.querySelector('canvas'), i);
+    card.querySelector('.btn').onclick = () => { hideModal(); if (G) G.state = paused === 'fail' ? 'play' : paused; };
+  });
+}
+function win() {
+  G.state = 'won';
+  const done = store.get('done', {}); done[G.li] = true; store.set('done', done);
+  store.set('coins', store.get('coins', 0) + 25);
+  const li = G.li, last = li === LEVELS.length - 1;
+  showModal(`<span class="badge" style="background:#3ccf55">BÖLÜM TAMAMLANDI</span><div class="big">🥚🎉</div><h2>Harika!</h2>
+    <p style="text-align:center"><span class="coin"></span> <b>+25 coin</b></p>
+    <div class="btns"><button class="btn g" id="w1">Menü</button><button class="btn" id="w2">${last ? 'Tekrar' : 'Sonraki mekanik'}</button></div>`, () => {
+    $('w1').onclick = showMenu;
+    $('w2').onclick = () => startLevel(last ? li : li + 1, !last);
+  });
+}
+function fail(kind) {
+  G.state = 'fail';
+  const cost = G.continues === 0 ? 900 : 1900 * Math.pow(2, G.continues - 1);
+  const belt = kind === 'belt';
+  showModal(`<span class="badge" style="background:#ff4b4b">${belt ? 'CONVEYOR DOLDU' : 'HAMLE KALMADI'}</span>
+    <div class="big">${belt ? '🥚🥚🥚' : '🐔❓'}</div>
+    <h2>${belt ? 'Bant dolu!' : 'Sıkıştın!'}</h2>
+    <p style="text-align:center">${belt ? 'Banttaki yumurtalar aktif tepsilerle eşleşmiyor.' : 'Gönderilebilecek tavuk kalmadı.'}</p>
+    <div class="btns">${belt ? `<button class="btn o" id="f1">Play On <small>${cost} coin · demoda ücretsiz</small></button>` : ''}<button class="btn" id="f2">Tekrar Dene</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn g" id="f3">Menü</button></div>`, () => {
+    if (belt) $('f1').onclick = () => { hideModal(); playOn(); };
+    $('f2').onclick = () => startLevel(G.li, false);
+    $('f3').onclick = showMenu;
+  });
+}
+function boot() {
+  cv = $('cv'); ctx = cv.getContext('2d');
+  fit(); window.addEventListener('resize', fit);
+  cv.addEventListener('pointerdown', onTap);
+  $('bMenu').onclick = showMenu;
+  $('bRestart').onclick = () => G && startLevel(G.li, false);
+  $('bInfo').onclick = () => G && showTutorial(G.li);
+  buildMenu();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(buildMenu);
+  // Kısayol: #lv=3 → doğrudan 3. mekanik bölümünü açar (#lv=3&skip → tanıtım penceresi olmadan)
+  const m = /lv=(\d+)/.exec(location.hash);
+  if (m && LEVELS[+m[1] - 1]) {
+    startLevel(+m[1] - 1, !/skip/.test(location.hash));
+    const ff = /ff=(\d+)/.exec(location.hash);
+    if (ff) for (let i = 0, cd = 0; i < +ff[1] * 30; i++) {
+      update(1 / 30); cd -= 1 / 30;
+      if (cd <= 0 && G.state === 'play') { const ts = getTappables(); if (ts.length) { doTap(ts[0]); cd = 1.2; } }
+    }
+  }
+  raf = requestAnimationFrame(loop);
+}
+if (typeof document !== 'undefined' && document.getElementById('cv')) boot();
+</script>
+</body>
+</html>
